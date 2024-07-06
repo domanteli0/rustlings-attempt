@@ -25,7 +25,7 @@ impl Default for Person {
 // Please note that you'll need to parse the age component into a `usize`
 // with something like `"4".parse::<usize>()`. The outcome of this needs to
 // be handled appropriately.
-//
+
 // Steps:
 // 1. If the length of the provided string is 0, then return the default of Person
 // 2. Split the given string on the commas present in it
@@ -35,10 +35,26 @@ impl Default for Person {
 // If while parsing the age, something goes wrong, then return the default of Person
 // Otherwise, then return an instantiated Person object with the results
 
-// I AM NOT DONE
-
 impl From<&str> for Person {
     fn from(s: &str) -> Person {
+        if s.len() == 0 { return Person::default(); }
+        if let Some((mut name, age_str)) = s
+            .trim()
+            .split_once(',')
+            .map( |(name, age_str)|
+                (name.trim_end(), age_str.trim_start())
+            )
+        {
+            if name.len() == 0 { return Person::default(); }
+            else if let Ok(age) = age_str.parse::<usize>() {
+                return Person {
+                    name: name.into(),
+                    age,
+                };
+            }
+        }
+
+        Person::default()
     }
 }
 

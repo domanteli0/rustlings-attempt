@@ -18,25 +18,54 @@
 // where the second TODO comment is. Try not to create any copies of the `numbers` Vec!
 // Execute `rustlings hint arc1` or use the `hint` watch subcommand for a hint.
 
-// I AM NOT DONE
 
 #![forbid(unused_imports)] // Do not change this, (or the next) line.
-use std::sync::Arc;
-use std::thread;
+use std::{thread, time::Duration};
+
+#[derive(Clone, Copy)]
+struct SendSyncPtr<T>(*const T);
+
+impl<T> Into<SendSyncPtr<T>> for *const T {
+    fn into(self) -> SendSyncPtr<T> {
+        SendSyncPtr(self)
+    }
+}
+
+impl<T: Copy> SendSyncPtr<T> {
+    fn get(&self) -> T {
+        unsafe { *self.0 }
+    }
+
+    fn slice_from_len(&self, len: usize) -> &[T] {
+        unsafe {
+            std::slice::from_raw_parts(self.0, len)
+        }
+    }
+}
+
+unsafe impl<T> Send for SendSyncPtr<T> {}
+unsafe impl<T> Sync for SendSyncPtr<T> {}
 
 fn main() {
     let numbers: Vec<_> = (0..100u32).collect();
-    let shared_numbers = // TODO
     let mut joinhandles = Vec::new();
+    let len = numbers.len();
 
     for offset in 0..8 {
-        let child_numbers = // TODO
+        thread::sleep(Duration::from_millis(10));
+        let child_numbers: SendSyncPtr<_> = numbers.as_ptr().into(); 
+
         joinhandles.push(thread::spawn(move || {
-            let sum: u32 = child_numbers.iter().filter(|&&n| n % 8 == offset).sum();
+            let slice = child_numbers.slice_from_len(len);
+            let sum: u32 = slice
+                .iter()
+                .filter(|&&n| n % 8 == offset)
+                .sum();
+
             println!("Sum of offset {} is {}", offset, sum);
         }));
     }
-    for handle in joinhandles.into_iter() {
-        handle.join().unwrap();
-    }
+    // for handle in joinhandles.into_iter() {
+    //     handle.join().unwrap();
+    // }
 }

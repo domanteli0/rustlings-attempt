@@ -23,8 +23,6 @@ enum IntoColorError {
     IntConversion,
 }
 
-// I AM NOT DONE
-
 // Your task is to complete this implementation
 // and return an Ok result of inner type Color.
 // You need to create an implementation for a tuple of three integers,
@@ -38,6 +36,12 @@ enum IntoColorError {
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = IntoColorError;
     fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+        Ok(Color {
+            red: tuple.0.try_into().ok().ok_or(IntoColorError::IntConversion)?,
+            green: tuple.1.try_into().ok().ok_or(IntoColorError::IntConversion)?,
+            blue: tuple.2.try_into().ok().ok_or(IntoColorError::IntConversion)?,
+
+        })
     }
 }
 
@@ -45,13 +49,19 @@ impl TryFrom<(i16, i16, i16)> for Color {
 impl TryFrom<[i16; 3]> for Color {
     type Error = IntoColorError;
     fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+        TryFrom::try_from((arr[0], arr[1], arr[2]))
     }
 }
 
 // Slice implementation
 impl TryFrom<&[i16]> for Color {
     type Error = IntoColorError;
-    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+    fn try_from(arr: &[i16]) -> Result<Self, Self::Error> {
+        TryFrom::<[i16; 3]>::try_from(arr
+            .try_into()
+            .ok()
+            .ok_or(IntoColorError::BadLen)?
+        )
     }
 }
 
@@ -84,6 +94,7 @@ mod tests {
             Err(IntoColorError::IntConversion)
         );
     }
+
     #[test]
     fn test_tuple_out_of_range_negative() {
         assert_eq!(
